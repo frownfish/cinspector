@@ -41,26 +41,59 @@ def index_tree(root):
 
 
 def print_tree(index, f, level=0, printed=[]):
-    """ print a representation of the include tree, beginning at a given file. """
-    print '|' + ('-' * 3 + '+') * level, ('*' if f in printed else '') + f
-    if f not in printed:
-        for i in index[f]:
-            printed.append(f)
-            print_tree(index, i, level + 1, printed)
+    def _print_tree(index, f, level=0, printed=[]):
+        """ print a representation of the include tree, beginning at a given file. """
+        print '|' + ('-' * 3 + '+') * level, ('*' if f in printed else '') + f
+        if f not in printed:
+            for i in index.get(f, []):
+                printed.append(f)
+                _print_tree(index, i, level + 1, printed)
+    print "\n\nThis file is includes the following files"
+    _print_tree(index, f, level=0, printed=[])
 
 
-def print_usage():
+def print_help():
     """ print the usage message. """
     message = "call from source root:\n\n    python <path_to_this_file>/include_tree.py <file>"
     print message
+
+
+def index_usages(index, f, usages=[]):
+    """ index what files include the given file, recursively. """
+    tmp = []
+    for k, items in index.items():
+        if f in items and k not in usages:
+            tmp.append(k)
+            tmp.extend(index_usages(index, k, tmp))
+    
+    tmp = list(set(tmp))
+    tmp.sort()
+    return tmp
+
+
+def print_usages(usages, fltr=''):
+    def _filter(u, fltr):
+        ret = []
+        for k in u:
+            if re.search(fltr, k):
+                ret.append(k)
+        return ret
+    print "\n\nThis file is included in these files (using the filter: \"{f}\")".format(f=fltr)
+    for k in _filter(usages, fltr):
+        print k
 
 
 if __name__ == '__main__':
     try:
         f = sys.argv[1]
     except:
-        print_usage()
+        print_help()
         sys.exit(1)
+
+    C_FLTR = r'\.c$'
+    CPP_FLTR = r'\.cpp$'
+    H_FLTR = r'\.h$'
 
     index = index_tree(SOURCE_ROOT)
     print_tree(index, f.lower())
+    print_usages(index_usages(index, f.lower()), fltr=C_FLTR)
