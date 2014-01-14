@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import os
 import sys
 import re
@@ -8,7 +10,7 @@ INCL_PAT = r'#include \"(.*?\.h)\"'
 
 
 def index_files(root):
-    """ walk through the file system indexing file paths by their file name """
+    """ walk through the file system indexing file paths by their file name. """
     index = {}
     for r, _, files in os.walk(root):
         for f in [x for x in files if os.path.splitext(x)[1] in INDEX_LIST]:
@@ -19,6 +21,7 @@ def index_files(root):
 
 
 def index_includes(path):
+    """ find all the includes in a file and return the list of them. """
     text = ''
     index = []
     with open(path, 'r') as f:
@@ -29,6 +32,7 @@ def index_includes(path):
 
 
 def index_tree(root):
+    """ loop through the source tree and build an index of what file includes what headers. """
     file_index = index_files(root)
     incl_index = dict.fromkeys(file_index.keys(), [])
     for f in incl_index.keys():
@@ -37,6 +41,7 @@ def index_tree(root):
 
 
 def print_tree(index, f, level=0, printed=[]):
+    """ print a representation of the include tree, beginning at a given file. """
     print '|' + ('-' * 3 + '+') * level, ('*' if f in printed else '') + f
     if f not in printed:
         for i in index[f]:
@@ -44,10 +49,17 @@ def print_tree(index, f, level=0, printed=[]):
             print_tree(index, i, level + 1, printed)
 
 
+def print_usage():
+    """ print the usage message. """
+    message = "call from source root:\n\n    python <path_to_this_file>/include_tree.py <file>"
+    print message
+
+
 if __name__ == '__main__':
     try:
         f = sys.argv[1]
     except:
+        print_usage()
         sys.exit(1)
 
     index = index_tree(SOURCE_ROOT)
