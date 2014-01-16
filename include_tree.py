@@ -7,6 +7,9 @@ import re
 SOURCE_ROOT = os.getcwd()
 INDEX_LIST = ['.h', '.c', '.cpp']
 INCL_PAT = r'#include \"(.*?\.h)\"'
+DEF_FILTERS = {'c': r'\.c$',
+               'cpp': r'\.cpp$',
+               'h': r'\.h$'}
 
 
 def index_files(root):
@@ -48,7 +51,7 @@ def print_tree(index, f, level=0, printed=[]):
             for i in index.get(f, []):
                 printed.append(f)
                 _print_tree(index, i, level + 1, printed)
-    print "\n\nThis file is includes the following files"
+    print "\n\n{f} includes the following files".format(f=f)
     _print_tree(index, f, level=0, printed=[])
 
 
@@ -71,21 +74,23 @@ def index_usages(index, f, usages=[]):
     return tmp
 
 
-def print_usages(usages, fltr=''):
+def print_usages(f, usages, fltr=''):
     def _filter(u, fltr):
+        if fltr in DEF_FILTERS.keys():
+            fltr = DEF_FILTERS[fltr]
         ret = []
         for k in u:
             if re.search(fltr, k):
                 ret.append(k)
         return ret
-    print "\n\nThis file is included in these files (using the filter: \"{f}\")".format(f=fltr)
+    print "\n\n{f} is included in these files (using the filter: \"{fltr}\")".format(f=f, fltr=fltr)
     for k in _filter(usages, fltr):
         print k
 
 
 if __name__ == '__main__':
     try:
-        f = sys.argv[1]
+        f = sys.argv[1].lower()
     except:
         print_help()
         sys.exit(1)
@@ -94,18 +99,6 @@ if __name__ == '__main__':
         fltr = sys.argv[2]
     except:
         fltr = ''
-
-    C_FLTR = r'\.c$'
-    CPP_FLTR = r'\.cpp$'
-    H_FLTR = r'\.h$'
-
-    if fltr in ['c']:
-        fltr = C_FLTR
-    elif fltr in ['cpp']:
-        fltr = CPP_FLTR
-    elif fltr in ['h']:
-        fltr = H_FLTR
-
     index = index_tree(SOURCE_ROOT)
-    print_tree(index, f.lower())
-    print_usages(index_usages(index, f.lower()), fltr=fltr)
+    print_tree(index, f)
+    print_usages(f, index_usages(index, f), fltr=fltr)
