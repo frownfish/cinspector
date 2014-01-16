@@ -54,7 +54,7 @@ def print_tree(index, f, level=0, printed=[]):
 
 def print_help():
     """ print the usage message. """
-    message = "call from source root:\n\n    python <path_to_this_file>/include_tree.py <file> [regex-filter]"
+    message = "call from source root:\n\n    python <path_to_this_file>/include_tree.py <file> [c|cpp|h|<regex-filter>]"
     print message
 
 
